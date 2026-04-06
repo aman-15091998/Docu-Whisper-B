@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    /* File Layout */
+    "rootDir": "./src", // Essential: Tells TS where your source is
+    "outDir": "./dist", // Essential: Tells TS where to put compiled JS
+
+    /* Environment Settings */
+    "module": "NodeNext", // Good for modern Node.js
+    "moduleResolution": "NodeNext",
+    "target": "ESNext",
+    "lib": ["ESNext"], // Standard for Node.js
+    "types": ["node"], // Enables Node.js global types
+
+    /* Interop (Crucial for Express/Mongoose) */
+    "esModuleInterop": true, // Allows: import express from 'express'
+    "forceConsistentCasingInFileNames": true,
+
+    /* Stricter Typechecking */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+
+    /* Outputs */
+    "sourceMap": true, // Helps with debugging (shows .ts lines in errors)
+    "skipLibCheck": true, // Speeds up build; ignores errors in node_modules
+
+    /* Clean up for Backend */
+    "jsx": "preserve", // You don't need react-jsx in the backend
+    "isolatedModules": true
+  },
+  "include": ["src/**/*"], // Only compile files in src
+  "exclude": ["node_modules", "dist"] // Ignore these folders
+}

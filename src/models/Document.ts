@@ -26,4 +26,13 @@ const DocumentSchema = new Schema({
   summary: { type: String },
 }, { timestamps: true });
 
-export default mongoose.models.Document || mongoose.model<IDocument>('Document', DocumentSchema);
+const DocumentModel = mongoose.models.Document || mongoose.model<IDocument>('Document', DocumentSchema);
+
+/**
+ * Model Functions
+ */
+export const createDoc = (data: Partial<IDocument>) => new DocumentModel(data).save();
+export const getDocsByUser = (userId: string) => DocumentModel.find({ userId }).sort({ createdAt: -1 });
+export const updateDocStatus = (id: string, status: IDocument['status']) => DocumentModel.findByIdAndUpdate(id, { status }, { new: true });
+export const getDocById = (id: string) => DocumentModel.findById(id);
+export const deleteDoc = (id: string) => DocumentModel.findByIdAndDelete(id);

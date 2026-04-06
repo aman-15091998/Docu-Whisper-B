@@ -24,5 +24,25 @@ const ChunkSchema = new Schema({
   }
 });
 
-// IMPORTANT: After deploying, create a Vector Search Index in MongoDB Atlas UI on the 'embedding' field.
-export default mongoose.models.Chunk || mongoose.model<IChunk>('Chunk', ChunkSchema);
+const ChunkModel = mongoose.models.Chunk || mongoose.model<IChunk>('Chunk', ChunkSchema);
+
+/**
+ * Model Functions
+ */
+export const insertChunks = (chunks: Partial<IChunk>[]) => ChunkModel.insertMany(chunks);
+export const deleteChunksByDoc = (documentId: string) => ChunkModel.deleteMany({ documentId });
+
+export const vectorSearch = (userId: string, vector: number[], limit = 5) => {
+  return ChunkModel.aggregate([
+    {
+      $vectorSearch: {
+        index: "vector_index", // Ensure this matches Atlas index name
+        path: "embedding",
+        queryVector: vector,
+        numCandidates: limit * 10,
+        limit: limit,
+        filter: { userId: new mongoose.Types.ObjectId(userId) }
+      }
+    }
+  ]);
+};

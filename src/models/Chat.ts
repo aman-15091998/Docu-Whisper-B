@@ -32,4 +32,26 @@ const ChatSchema = new Schema({
   suggestedQuestions: [String]
 }, { timestamps: true });
 
-export default mongoose.models.Chat || mongoose.model<IChat>('Chat', ChatSchema);
+const ChatModel = mongoose.models.Chat || mongoose.model<IChat>('Chat', ChatSchema);
+
+/**
+ * Model Functions
+ */
+export const createChat = (userId: string, data: Partial<IChat>) => new ChatModel({ ...data, userId }).save();
+export const getChatById = (id: string, userId: string) => ChatModel.findOne({ _id: id, userId });
+export const getChatsByUser = (userId: string) => ChatModel.find({ userId }).sort({ updatedAt: -1 });
+export const addChatMessage = (chatId: string, message: any) => {
+  return ChatModel.findByIdAndUpdate(chatId, { $push: { messages: message } }, { new: true });
+};
+export const updateChatFeedback = (chatId: string, messageId: string, feedback: string, feedbackText?: string) => {
+  return ChatModel.findOneAndUpdate(
+    { _id: chatId, "messages._id": messageId },
+    { 
+      $set: { 
+        "messages.$.feedback": feedback,
+        "messages.$.feedbackText": feedbackText 
+      } 
+    },
+    { new: true }
+  );
+};
