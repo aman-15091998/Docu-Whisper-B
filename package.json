@@ -1,0 +1,50 @@
+{
+  "name": "docusense-ai",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "server": "tsx src/api/server.ts"
+  },
+  "dependencies": {
+    "next": "16.2.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "express": "^4.21.0",
+    "mongoose": "^9.4.1",
+    "bullmq": "^5.73.0",
+    "ioredis": "^5.5.0",
+    "dotenv": "^16.4.7",
+    "cors": "^2.8.5",
+    "axios": "^1.7.9",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.9.0",
+    "officeparser": "^4.2.0",
+    "@google/generative-ai": "^0.23.0",
+    "@aws-sdk/client-s3": "^3.750.0",
+    "@aws-sdk/s3-request-presigner": "^3.750.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^3.0.0",
+    "@bull-board/api": "^6.7.0",
+    "@bull-board/express": "^6.7.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.17",
+    "@types/jsonwebtoken": "^9.0.8",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/pdf-parse": "^1.1.4",
+    "eslint": "^9.18.0",
+    "eslint-config-next": "16.2.2",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0"
+  }
+}
