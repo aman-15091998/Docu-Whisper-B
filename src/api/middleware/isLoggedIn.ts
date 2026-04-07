@@ -21,7 +21,7 @@ export function isLoggedIn(req: Request, res: Response, next: NextFunction) {
     token = authHeader.substring(7); // Remove 'Bearer ' prefix
   }
   // Fallback to cookie if no header
-  else if (req.cookies.token) {
+  else if ( req.cookies && req.cookies.token) {
     token = req.cookies.token;
   }
 

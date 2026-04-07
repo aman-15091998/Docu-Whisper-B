@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
+import '../worker/worker';
 
 import { connectDB } from '../config/db';
 import { documentQueue } from '../worker/queue';

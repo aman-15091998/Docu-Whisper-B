@@ -31,8 +31,8 @@ const DocumentModel = mongoose.models.Document || mongoose.model<IDocument>('Doc
 /**
  * Model Functions
  */
-export const createDoc = (data: Partial<IDocument>) => new DocumentModel(data).save();
-export const getDocsByUser = (userId: string) => DocumentModel.find({ userId }).sort({ createdAt: -1 });
-export const updateDocStatus = (id: string, status: IDocument['status']) => DocumentModel.findByIdAndUpdate(id, { status }, { new: true });
-export const getDocById = (id: string) => DocumentModel.findById(id);
-export const deleteDoc = (id: string) => DocumentModel.findByIdAndDelete(id);
+export const createDoc = async (data: Partial<IDocument>) => await new DocumentModel(data).save();
+export const getDocsByUser = async (userId: string) => await DocumentModel.find({ userId }).sort({ createdAt: -1 });
+export const updateDocStatus = async (id: string, status: IDocument['status']) => await DocumentModel.findByIdAndUpdate(id, { status }, { new: true });
+export const getDocById = async (id: string) => await DocumentModel.findById(id);
+export const deleteDoc = async (id: string) => await DocumentModel.findByIdAndDelete(id);

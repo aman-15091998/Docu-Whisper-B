@@ -1,7 +1,7 @@
 export const aiConfig = {
   gemini: {
     apiKey: process.env.GEMINI_API_KEY,
-    model: "gemini-1.5-flash", // Fast and cost-effective for RAG
+    model: process.env.GEMINI_MODEL, // Fast and cost-effective for RAG
   },
   jina: {
     apiKey: process.env.JINA_API_KEY,

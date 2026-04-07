@@ -30,7 +30,7 @@ const UserModel = mongoose.models.User || mongoose.model<IUser>('User', UserSche
 /**
  * Model Functions
  */
-export const createUser = (data: Partial<IUser>) => new UserModel(data).save();
-export const getUserByEmail = (email: string) => UserModel.findOne({ email });
-export const getUserById = (id: string) => UserModel.findById(id);
-export const comparePassword = (password: string, hash: string) => bcrypt.compare(password, hash);
+export const createUser = async (data: Partial<IUser>) => await new UserModel(data).save();
+export const getUserByEmail = async (email: string) => await UserModel.findOne({ email });
+export const getUserById = async (id: string) => await UserModel.findById(id);
+export const comparePassword = async (password: string, hash: string) => await bcrypt.compare(password, hash);

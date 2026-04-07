@@ -29,11 +29,11 @@ const ChunkModel = mongoose.models.Chunk || mongoose.model<IChunk>('Chunk', Chun
 /**
  * Model Functions
  */
-export const insertChunks = (chunks: Partial<IChunk>[]) => ChunkModel.insertMany(chunks);
-export const deleteChunksByDoc = (documentId: string) => ChunkModel.deleteMany({ documentId });
+export const insertChunks =async (chunks: Partial<IChunk>[]) => await ChunkModel.insertMany(chunks);
+export const deleteChunksByDoc = async (documentId: string) => await ChunkModel.deleteMany({ documentId });
 
-export const vectorSearch = (userId: string, vector: number[], limit = 5) => {
-  return ChunkModel.aggregate([
+export const vectorSearch = async (userId: string, vector: number[], limit = 5) => {
+  return await ChunkModel.aggregate([
     {
       $vectorSearch: {
         index: "vector_index", // Ensure this matches Atlas index name
