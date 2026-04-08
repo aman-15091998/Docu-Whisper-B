@@ -7,11 +7,13 @@
     "serve": "tsc && node dist/api/server.js"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.60",
     "@aws-sdk/client-s3": "^3.750.0",
     "@aws-sdk/s3-request-presigner": "^3.750.0",
     "@bull-board/api": "^6.7.0",
     "@bull-board/express": "^6.7.0",
     "@google/generative-ai": "^0.23.0",
+    "ai": "^6.0.153",
     "axios": "^1.7.9",
     "bcryptjs": "^3.0.0",
     "bullmq": "^5.73.0",
