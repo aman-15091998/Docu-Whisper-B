@@ -1,8 +1,8 @@
-import { Worker, Job } from 'bullmq';
-import { redisConfig } from '../config/redis';
-import { INGESTION_QUEUE } from './queue';
-import { ingestionService } from '../services/ingestion.service';
-import { updateDocStatus } from '../models/Document';
+import { Worker, Job } from "bullmq";
+import { redisConfig } from "../config/redis";
+import { INGESTION_QUEUE } from "./queue";
+import { ingestionService } from "../services/ingestion.service";
+import { updateDocStatus } from "../models/Document";
 
 /**
  * This is the Background Worker.
@@ -20,11 +20,15 @@ export const ingestionWorker = new Worker(
       await job.updateProgress(5);
 
       // 2. Download & Parse -> RETURN the text instead of saving to DB
-      const rawPages = await ingestionService.downloadAndParse(documentId, fileKey);
+      const rawPages = await ingestionService.downloadAndParse(
+        documentId,
+        fileKey,
+        userId,
+      );
       await job.updateProgress(30);
 
       // 3. Generate Metadata -> Pass rawPages directly
-      await ingestionService.generateMetadata(documentId, rawPages);
+      await ingestionService.generateMetadata(documentId, rawPages, userId);
       await job.updateProgress(50);
 
       // 4. Generate Embeddings -> Pass rawPages directly
@@ -34,10 +38,10 @@ export const ingestionWorker = new Worker(
       console.log(`✅ Document ${documentId} indexed successfully.`);
     } catch (error) {
       console.error(`❌ Worker Error:`, error);
-      await updateDocStatus(documentId, 'failed');
+      await updateDocStatus(documentId, "failed");
       throw error; // Triggers BullMQ retry
     }
   },
-  { connection: redisConfig.connection }
+  { connection: redisConfig.connection },
 );
 console.log("🚀 Ingestion Worker is live and listening...");

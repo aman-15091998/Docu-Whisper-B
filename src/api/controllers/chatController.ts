@@ -31,7 +31,7 @@ export const createConversation = async (req: Request, res: Response) => {
     let initialTitle = title || "New Discussion";
 
     // If user provides a query at creation, generate a smart title from it
-    if (userQuery && !title) {
+    if (userQuery) {
       const smartTitle = await generateSmartTitle("", userQuery, true);
       if (smartTitle) initialTitle = smartTitle;
     }
@@ -133,8 +133,8 @@ export const sendMessage = async (req: Request, res: Response) => {
           })),
         };
 
-        await addChatMessage(chatId, userMsg);
-        const updatedChat = await addChatMessage(chatId, assistantMsg);
+        await addChatMessage(chatId, userMsg, userId);
+        const updatedChat = await addChatMessage(chatId, assistantMsg, userId);
 
         // Background Tasks: Refine title and generate follow-up questions
         if (

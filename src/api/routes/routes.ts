@@ -4,7 +4,7 @@ import {
   registerUser,
   verifyAndReturnUser,
 } from "../controllers/userController";
-import { getUploadUrl, confirmUpload } from "../controllers/documentController";
+import { getUploadUrl, confirmUpload, getDocuments, deleteDocument } from "../controllers/documentController";
 import { isLoggedIn } from "../middleware/isLoggedIn";
 
 import {
@@ -28,6 +28,12 @@ router.post("/upload-url", isLoggedIn, getUploadUrl);
 
 // // 2. Client tells server: "File is in R2, please start processing"
 router.post("/confirm", isLoggedIn, confirmUpload);
+
+// // 3. Get all documents for the logged-in user
+router.get("/documents", isLoggedIn, getDocuments);
+
+// // 4. Delete a document
+router.delete("/documents/:id", isLoggedIn, deleteDocument);
 
 // Chat Routes
 // Create a new empty conversation thread
