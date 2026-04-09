@@ -108,4 +108,17 @@ export const aiService = {
       throw error;
     }
   },
+
+  /**
+   * Simple Completion for Titles and Suggested Questions
+   */
+  async generateSimpleCompletion(prompt: string, isJson: boolean = false) {
+    const model = genAI.getGenerativeModel({
+      model: aiConfig.gemini.model || "gemini-2.5-flash",
+      generationConfig: isJson ? { responseMimeType: "application/json" } : {},
+    });
+
+    const result = await model.generateContent(prompt);
+    return { text: result.response.text() };
+  },
 };

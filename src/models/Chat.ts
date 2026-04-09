@@ -55,3 +55,11 @@ export const updateChatFeedback = async (chatId: string, messageId: string, feed
     { new: true }
   );
 };
+
+export const updateChatTitle = async (chatId: string, title: string) => {
+  return await ChatModel.findByIdAndUpdate(chatId, { title }, { new: true });
+};
+
+export const updateSuggestedQuestions = async (chatId: string, questions: string[]) => {
+  return await ChatModel.findByIdAndUpdate(chatId, { suggestedQuestions: questions }, { new: true });
+};

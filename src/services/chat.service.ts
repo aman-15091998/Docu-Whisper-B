@@ -6,31 +6,40 @@ export const chatService = {
   /**
    * Prepares history and context for the Vercel AI SDK
    */
-  async prepareChatContext(userQuery: string, userId: string, history: any[]) {
+  async prepareChatContext(
+    userQuery: string,
+    userId: string,
+    history: any[],
+    mode: "default" | "comparison" = "default",
+  ) {
     // 1. Get Vector & Reranked Context
-    // We pass the string directly as our aiService handles the array internally
     const queryVectorArr = await aiService.createEmbeddings([userQuery]);
     const queryVector = queryVectorArr[0];
+
+    console.log("queryVectorArr", queryVectorArr);
 
     const contextResults = await vectorService.getRelevantContext(
       queryVector,
       userId,
       userQuery,
+      mode,
     );
 
-    // 2. Format Context for the Prompt
+    // 2. Format Context for the Prompt with indices for citation
     const contextString = contextResults
-      .map((res: any) => `CONTENT: ${res.text || ""}`)
+      .map(
+        (res: any, index: number) =>
+          `[[${index + 1}]] SOURCE: ${res.metadata?.fileName || "Unknown"} (Page: ${res.metadata?.pageNumber || "N/A"})\nCONTENT: ${res.text || ""}`,
+      )
       .join("\n\n---\n\n");
 
-    // 3. Map History to CoreMessage with Feedback Injection
-    // We limit to the last 6 messages as per the plan
+    // 3. Map History to ModelMessage with Feedback Injection
     const coreMessages: ModelMessage[] = history.slice(-6).map((msg) => {
       let content = msg.content;
 
-      // Inject feedback loop: This tells the AI WHY it failed previously
+      // Inject feedback loop: Phase 2 standard [SYSTEM NOTE: User feedback: ...]
       if (msg.role === "assistant" && msg.feedback === "thumb_down") {
-        content += `\n\n[USER FEEDBACK: This previous response was marked as incorrect. Correction needed: ${msg.feedbackText || "Please provide a more accurate answer."}]`;
+        content += `\n\n[SYSTEM NOTE: User feedback: ${msg.feedbackText || "This previous response was marked as incorrect. Correction needed."}]`;
       }
 
       return {
@@ -41,19 +50,18 @@ export const chatService = {
 
     // 4. Construct System Instruction
     const systemPrompt = `You are Docu Whisper, an expert document assistant.
-    Use the following context to answer the user's question. 
-    If the answer is not in the context, say you don't know. 
-
-    CONTEXT:
-    ${contextString}
+    Use the following provided context chunks to answer the user's question. 
 
     INSTRUCTIONS:
     - Be concise and professional.
-    - Use the [Source: filename | Page: X] info from the context to cite your answers.
-    - If the user provided negative feedback in the history, prioritize correcting that mistake.`;
+    - Use verbatim quotes from the context when providing evidence.
+    - YOU MUST cite every claim using the index of the source in the format [[index]]. Example: "The revenue increased by 20% [[1]]."
+    - If the context does not contain the answer, state that you don't know based on the provided documents.
+
+    CONTEXT:
+    ${contextString}`;
 
     return {
-      // The Vercel AI SDK expects the system prompt as the first message or a separate option
       messages: [
         ...coreMessages,
         { role: "user", content: userQuery },
@@ -63,3 +71,5 @@ export const chatService = {
     };
   },
 };
+
+// - If the user provided a SYSTEM NOTE in the previous message, prioritize correcting that specific mistake in this turn.

@@ -73,7 +73,9 @@ export const getMatchingChunks = async (
         queryVector: queryVector,
         numCandidates: 100,
         limit: candidateLimit,
-        filter: { userId: userId }, // Security: only user's docs
+        filter: {
+          userId: new mongoose.Types.ObjectId(userId), // ✅ cast string to ObjectId
+        },
       },
     },
     {
