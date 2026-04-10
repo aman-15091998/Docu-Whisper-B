@@ -7,6 +7,7 @@ import {
   updateChatTitle,
   updateSuggestedQuestions,
   IChat,
+  updateChatFeedback,
 } from "../../models/Chat";
 import { chatService } from "../../services/chat.service";
 import { ModelMessage, streamText, pipeTextStreamToResponse } from "ai";
@@ -106,7 +107,6 @@ export const sendMessage = async (req: Request, res: Response) => {
   const userId: string = user.id;
   const chatId: string = String(conversationId);
 
-
   try {
     const chat = await getChatById(chatId, userId);
     if (!chat) {
@@ -148,11 +148,7 @@ export const sendMessage = async (req: Request, res: Response) => {
         const updatedChat = await addChatMessage(chatId, assistantMsg, userId);
 
         // Background Tasks: Refine title and generate follow-up questions
-        if (
-          updatedChat &&
-          updatedChat.messages.length === 2 &&
-          updatedChat.title === "New Discussion"
-        ) {
+        if (updatedChat && updatedChat.title === "New Discussion") {
           generateSmartTitle(chatId, text);
         }
         // generateSuggestedQuestions(chatId, text);
@@ -168,13 +164,49 @@ export const sendMessage = async (req: Request, res: Response) => {
         "X-Sources": JSON.stringify(sources), //  move sources header here too
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Streaming error:", error);
+
+    // Specifically handle Gemini/AI SDK 503 (service unavailable) or 429 (rate limit)
+    const statusCode = error.statusCode || 500;
+    const isOverloaded =
+      statusCode === 503 ||
+      (error.message && error.message.includes("high demand"));
+
     if (!res.headersSent) {
-      res
-        .status(500)
-        .json({ success: false, message: "Message processing failed" });
+      res.status(statusCode).json({
+        success: false,
+        message: isOverloaded
+          ? "The model is currently experiencing high traffic. Please try again in a few moments."
+          : "Message processing failed",
+        errorType: isOverloaded ? "TRAFFIC_OVERLOAD" : "INTERNAL_ERROR",
+      });
     }
+  }
+};
+
+export const submitMessageFeedback = async (req: Request, res: Response) => {
+  try {
+    const { conversationId, messageId } = req.params;
+    const { feedback, feedbackText } = req.body;
+    const userId = (req as any).user.id;
+
+    await updateChatFeedback(
+      String(conversationId),
+      String(messageId),
+      feedback,
+      userId,
+      feedbackText,
+    );
+    return res.json({
+      success: true,
+      message:
+        "Feedback submitted successfully. It will be used to improve future responses.",
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to submit feedback" });
   }
 };
 
@@ -435,6 +467,48 @@ export const sendMessage = async (req: Request, res: Response) => {
 // };
 
 /**
+ * GET /:conversationId/suggested-questions
+ * Generates AI-powered suggested questions based on context.
+ */
+export const getSuggestedQuestions = async (req: Request, res: Response) => {
+  const { conversationId } = req.params;
+  const userId = (req as any).user.id;
+
+  try {
+    const chat = await getChatById(String(conversationId), userId);
+    if (!chat)
+      return res
+        .status(404)
+        .json({ success: false, message: "Chat not found" });
+
+    // For existing chats use the last assistant message as context.
+    // For brand-new chats use the linked document names so the AI can
+    // suggest meaningful opening questions.
+    const assistantMessages = chat.messages.filter(
+      (m: any) => m.role === "assistant",
+    );
+
+    let context: string;
+    if (assistantMessages.length > 0) {
+      context = assistantMessages[assistantMessages.length - 1].content;
+    } else {
+      context = chat.linkedDocuments?.[0]?.summary;
+    }
+
+    const questions = await generateSuggestedQuestions(
+      String(conversationId),
+      context,
+    );
+    res.json({ success: true, questions });
+  } catch (error) {
+    console.error("Suggested questions error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to generate suggestions" });
+  }
+};
+
+/**
  * Background Helpers
  */
 async function generateSmartTitle(
@@ -461,17 +535,19 @@ async function generateSmartTitle(
 
 async function generateSuggestedQuestions(
   chatId: string,
-  lastResponse: string,
-) {
-  const prompt = `Based on this document-assistant response, suggest 3 highly relevant follow-up questions the user might ask.
-  RESPONSE: ${lastResponse.substring(0, 500)}
+  context: string,
+): Promise<string[]> {
+  const prompt = `Based on this context, suggest 3 highly relevant questions the user might ask a document-assistant.
+  CONTEXT: ${context.substring(0, 600)}
   RETURN A JSON ARRAY OF STRINGS ONLY: ["Question 1", "Question 2", "Question 3"]`;
 
   try {
     const { text } = await aiService.generateSimpleCompletion(prompt, true);
-    const questions = JSON.parse(text);
+    const questions: string[] = JSON.parse(text);
     await updateSuggestedQuestions(chatId, questions);
+    return questions;
   } catch (e) {
     console.error("Suggested questions failed", e);
+    return [];
   }
 }

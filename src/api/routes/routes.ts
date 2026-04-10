@@ -4,7 +4,12 @@ import {
   registerUser,
   verifyAndReturnUser,
 } from "../controllers/userController";
-import { getUploadUrl, confirmUpload, getDocuments, deleteDocument } from "../controllers/documentController";
+import {
+  getUploadUrl,
+  confirmUpload,
+  getDocuments,
+  deleteDocument,
+} from "../controllers/documentController";
 import { isLoggedIn } from "../middleware/isLoggedIn";
 
 import {
@@ -12,6 +17,8 @@ import {
   getConversations,
   sendMessage,
   getConversationById,
+  getSuggestedQuestions,
+  submitMessageFeedback,
 } from "../controllers/chatController";
 import { checkContextLock } from "../middleware/immutability.middleware";
 
@@ -48,6 +55,20 @@ router.post(
   isLoggedIn,
   checkContextLock,
   sendMessage,
+);
+
+// Submit user feedback
+router.post(
+  "/:conversationId/:messageId/feedback",
+  isLoggedIn,
+  submitMessageFeedback,
+);
+
+// Generate AI suggested questions for a conversation
+router.get(
+  "/:conversationId/suggested-questions",
+  isLoggedIn,
+  getSuggestedQuestions,
 );
 
 // Fetch full message history for a specific thread
