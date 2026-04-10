@@ -86,7 +86,17 @@ export const getConversationById = async (req: Request, res: Response) => {
 
 export const sendMessage = async (req: Request, res: Response) => {
   const { conversationId } = req.params;
-  const { message } = req.body;
+
+  // Accept both { message: string } and { messages: Message[] } (useChat default)
+  const message: string =
+    req.body.message ||
+    req.body.messages?.[req.body.messages.length - 1]?.content;
+
+  if (!message) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Message is required" });
+  }
 
   const user = (req as any).user;
   if (!user || !user.id) {
@@ -95,6 +105,7 @@ export const sendMessage = async (req: Request, res: Response) => {
 
   const userId: string = user.id;
   const chatId: string = String(conversationId);
+
 
   try {
     const chat = await getChatById(chatId, userId);
