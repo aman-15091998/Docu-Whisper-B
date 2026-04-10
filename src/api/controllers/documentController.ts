@@ -5,8 +5,11 @@ import {
   createDoc,
   IDocument,
   getDocsByUser,
+  getDocById,
   deleteDoc,
 } from "../../models/Document";
+import { deleteChunksByDoc } from "../../models/Chunk";
+import { markChatsInactiveByDocument } from "../../models/Chat";
 import { documentQueue, INGESTION_QUEUE } from "../../worker/queue";
 
 export const getUploadUrl = async (req: Request, res: Response) => {
@@ -16,8 +19,9 @@ export const getUploadUrl = async (req: Request, res: Response) => {
     return res.status(401).json({ success: false, message: "Unauthorized" });
   }
 
-  // Create a unique key: userId/timestamp-uuid-filename
-  const fileKey = `${req.user.id}/${Date.now()}-${fileName}`;
+  // Create a unique key: userId/timestamp-filename (with spaces replaced by hyphens)
+  const sanitizedFileName = fileName.trim().replace(/\s+/g, "-");
+  const fileKey = `${req.user.id}/${Date.now()}-${sanitizedFileName}`;
 
   const uploadUrl = await s3Service.getUploadUrl(fileKey, fileType);
 
@@ -74,17 +78,72 @@ export const getDocuments = async (req: Request, res: Response) => {
   }
 };
 
+export const getDownloadPresignedUrl = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
+  }
+
+  try {
+    const { id } = req.params;
+    const doc = await getDocById(String(id), req.user.id);
+
+    if (!doc) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Document not found" });
+    }
+
+    const downloadUrl = await s3Service.getDownloadUrl(doc.r2Key);
+
+    res.json({
+      success: true,
+      downloadUrl,
+      fileName: doc.fileName,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to generate download URL" });
+  }
+};
+
 export const deleteDocument = async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ success: false, message: "Unauthorized" });
   }
   try {
     const { id } = req.params;
-    await deleteDoc(id as string, req.user.id as string);
-    res.json({ success: true, message: "Document deleted" });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to delete document" });
+
+    // 1. Get doc to find the S3 key
+    const doc = await getDocById(String(id), req.user.id);
+    if (!doc) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Document not found" });
+    }
+
+    // 2. Delete from S3
+    await s3Service.deleteFile(doc.r2Key);
+
+    // 3. Delete chunks from Vector DB (Atlas)
+    await deleteChunksByDoc(String(id));
+
+    // 4. Delete document record from DB
+    await deleteDoc(String(id), req.user.id);
+
+    // 5. Mark associated chats as inactive
+    await markChatsInactiveByDocument(String(id));
+
+    res.json({
+      success: true,
+      message: "Document and associated data deleted",
+    });
+  } catch (error: any) {
+    console.error("Delete document error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete document",
+      error: error.message,
+    });
   }
 };

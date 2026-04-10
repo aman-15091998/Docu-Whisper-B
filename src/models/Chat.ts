@@ -18,6 +18,7 @@ const MessageSchema = new Schema(
       {
         fileName: String,
         pageNumber: Number,
+        chunkIndex: Number,
         text: String,
       },
     ],
@@ -109,5 +110,24 @@ export const updateSuggestedQuestions = async (
     chatId,
     { suggestedQuestions: questions },
     { new: true },
+  );
+};
+
+export const updateChatMode = async (
+  chatId: string,
+  mode: "default" | "comparison",
+  userId: string,
+) => {
+  return await ChatModel.findOneAndUpdate(
+    { _id: chatId, userId },
+    { $set: { mode } },
+    { new: true },
+  );
+};
+
+export const markChatsInactiveByDocument = async (documentId: string) => {
+  return await ChatModel.updateMany(
+    { linkedDocuments: documentId },
+    { $set: { isInactive: true } },
   );
 };

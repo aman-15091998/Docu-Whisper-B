@@ -49,7 +49,22 @@ export const chatService = {
     });
 
     // 4. Construct System Instruction
-    const systemPrompt = `You are Docu Whisper, an expert document assistant.
+    const systemPrompt =
+      mode === "comparison"
+        ? `You are Docu Whisper, an expert document analyst specializing in comparative research.
+    Your goal is to contrast and synthesize information across different documents or sections. 
+
+    INSTRUCTIONS:
+    - Compare and contrast the similarities and differences in facts, figures, or terms between the provided context chunks.
+    - Highlight discrepancies or unique details found in one document but not others.
+    - Organize your response for clarity (e.g., "While Document A states X, Document B specifies Y").
+    - Use verbatim quotes from the context for precision.
+    - YOU MUST cite every claim using the index of the source in the format [[index]]. Example: "Document A reports higher growth [[1]], whereas Document B is more conservative [[3]]."
+    - If the context does not contain enough info for a comparison, state what details are missing.
+
+    CONTEXT:
+    ${contextString}`
+        : `You are Docu Whisper, an expert document assistant.
     Use the following provided context chunks to answer the user's question. 
 
     INSTRUCTIONS:

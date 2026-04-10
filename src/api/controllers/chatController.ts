@@ -8,6 +8,7 @@ import {
   updateSuggestedQuestions,
   IChat,
   updateChatFeedback,
+  updateChatMode,
 } from "../../models/Chat";
 import { chatService } from "../../services/chat.service";
 import { ModelMessage, streamText, pipeTextStreamToResponse } from "ai";
@@ -88,6 +89,7 @@ export const getConversationById = async (req: Request, res: Response) => {
 export const sendMessage = async (req: Request, res: Response) => {
   const { conversationId } = req.params;
 
+  const { mode } = req.body;
   // Accept both { message: string } and { messages: Message[] } (useChat default)
   const message: string =
     req.body.message ||
@@ -115,17 +117,31 @@ export const sendMessage = async (req: Request, res: Response) => {
         .json({ success: false, message: "Chat not found" });
     }
 
+    if (chat.isInactive) {
+      return res.status(403).json({
+        success: false,
+        message: "This conversation is inactive because its linked documents were removed.",
+      });
+    }
+
+    // If mode is passed in request, persist it to the chat document
+    let activeMode = chat.mode;
+    if (mode && (mode === "default" || mode === "comparison") && mode !== chat.mode) {
+      await updateChatMode(chatId, mode, userId);
+      activeMode = mode;
+    }
+
     const { messages, systemPrompt, sources } =
       await chatService.prepareChatContext(
         message,
         userId,
         chat.messages as ModelMessage[],
-        chat.mode,
+        activeMode,
       );
 
     // Send sources in response header before stream starts
     // Headers must be set before flushHeaders/writing body
-    // res.setHeader("X-Sources", JSON.stringify(sources));
+    res.setHeader("X-Sources", JSON.stringify(sources));
     res.setHeader("Access-Control-Expose-Headers", "X-Sources"); // Required for CORS — frontend must be able to read it
 
     const result = streamText({

@@ -9,6 +9,7 @@ import {
   confirmUpload,
   getDocuments,
   deleteDocument,
+  getDownloadPresignedUrl,
 } from "../controllers/documentController";
 import { isLoggedIn } from "../middleware/isLoggedIn";
 
@@ -41,6 +42,9 @@ router.get("/documents", isLoggedIn, getDocuments);
 
 // // 4. Delete a document
 router.delete("/documents/:id", isLoggedIn, deleteDocument);
+
+// // 5. Get a presigned download URL
+router.get("/documents/:id/download", isLoggedIn, getDownloadPresignedUrl);
 
 // Chat Routes
 // Create a new empty conversation thread
