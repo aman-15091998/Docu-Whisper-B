@@ -20,6 +20,7 @@ Docu Whisper transforms static PDFs and text files into interactive knowledge ba
 - **Language**: TypeScript.
 - **Database**: MongoDB Atlas (Metadata + Vector Search).
 - **Storage**: Cloudflare R2 / S3 (Secure physical file storage).
+- **Queue Management**: BullMQ (Redis-based background tasks).
 - **Authentication**: JWT-based secure session management.
 
 ### AI Stack
@@ -84,8 +85,27 @@ The heart of Docu Whisper's analytical engine.
 - **Implementation**: After every assistant response, a background task analyzes the context and generates three highly relevant, unique follow-up questions. These are persisted and displayed as interactive "quick-action" buttons.
 
 ### 3. Answer Feedback Loop
+
 - **Purpose**: Establishes a mechanism for answer quality improvement and user preference tracking.
 - **Implementation**: Every response includes a "thumbs up/down" interface. Feedback is stored atomically in the MongoDB `Chat` schema, allowing for future fine-tuning or RAG retrieval optimization based on user satisfaction.
+
+---
+
+## ⚡ Background Processing & Queue Management
+
+Docu Whisper uses **BullMQ** for robust, asynchronous task processing. This ensures that the user interface remains responsive while the system performs heavy lifting in the background.
+
+### 1. Document Ingestion Pipeline
+When a user uploads a file, the API immediately returns a "processing" status and offloads the following tasks to a background worker:
+- **Download**: Retrieving the file from secure S3/R2 storage.
+- **Parsing**: Extracting raw text and structural metadata (line ranges, page numbers) from PDFs or DOCX files.
+- **Vectorization**: Generating high-dimensional embeddings via Jina AI.
+- **Indexing**: Upserting the chunks and vectors into MongoDB Atlas.
+
+### 2. Operational Monitoring
+The system includes a built-in dashboard for monitoring queue health, job progress, and retries.
+- **Dashboard URL**: `/admin/queues`
+- **Features**: Real-time progress bars, error logs for failed ingestions, and manual job re-runs.
 
 ---
 
@@ -97,10 +117,14 @@ The heart of Docu Whisper's analytical engine.
 
 ---
 
-## 🚧 Known Limitations
+## 🚧 Known Limitations & Current Gaps
 
-- **File Size**: Currently optimized for PDFs up to 10MB. Larger files may experience ingestion delays.
-- **OCR**: The current ingestion worker relies on text extraction; scanned images without an OCR layer are not yet supported.
+- **Comparison Mode Fidelity**: The comparison engine is in a preliminary state. A high-fidelity implementation would require multi-document context injection, which currently exceeds the rate limits of the Gemini API free tier.
+- **Real-time Status Updates**: There is no WebSocket or automated polling mechanism for document ingestion. Users must manually refresh the dashboard to see when a document has completed processing.
+- **Frontend Markdown Rendering**: While the backend generates structured citations and Markdown formatting, the frontend currently renders responses as plain text. Rich text rendering is a planned improvement.
+- **API Rate Limiting**: The Gemini free tier has significant throughput constraints. For production scalability, we are exploring more generous LLM providers or upgrading the current service tier.
+- **File Size**: Currently optimized for PDFs up to 10MB.
+- **OCR**: The ingestion worker relies on text extraction; scanned images without an OCR layer are not yet supported.
 
 ---
 
@@ -167,6 +191,9 @@ The API is a standard Node.js application. Recommended platforms: **Render**, **
 ---
 
 ## 🛠 Setup (Local)
+
+**Prerequisites**: [Redis](https://redis.io/) (or [Upstash](https://upstash.com/)) must be running and accessible via the `UPSTASH_REDIS_URL` environment variable.
+
 1.  **Clone the repo**: `git clone <repo-url>`
 2.  **API**: `cd api && npm install && npm run serve`
 3.  **Frontend**: `cd my-app && npm install && npm run dev`

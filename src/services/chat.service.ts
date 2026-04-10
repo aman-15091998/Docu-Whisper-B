@@ -77,7 +77,7 @@ export const chatService = {
 
     CONTEXT:
     ${contextString}`;
-    console.log("system prompt", systemPrompt);
+    // console.log("system prompt", systemPrompt);
     return {
       messages: [
         ...coreMessages,

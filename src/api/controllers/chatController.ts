@@ -129,8 +129,8 @@ export const sendMessage = async (req: Request, res: Response) => {
     let activeMode = chat.mode;
     if (
       mode &&
-      (mode === "default" || mode === "comparison") &&
-      mode !== chat.mode
+      (mode == "default" || mode == "comparison") &&
+      mode != chat.mode
     ) {
       await updateChatMode(chatId, mode, userId);
       activeMode = mode;
@@ -513,8 +513,8 @@ export const getSuggestedQuestions = async (req: Request, res: Response) => {
     const assistantMessages = chat.messages.filter(
       (m: any) => m.role === "assistant",
     );
-    console.log("linkedDocuments", chat.linkedDocuments);
-    console.log("assistantMessages", assistantMessages);
+    // console.log("linkedDocuments", chat.linkedDocuments);
+    // console.log("assistantMessages", assistantMessages);
     let context: string;
     if (assistantMessages.length > 0) {
       context = assistantMessages[assistantMessages.length - 1].content;
