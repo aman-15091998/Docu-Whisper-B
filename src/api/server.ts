@@ -16,7 +16,13 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // 1. Middlewares
-app.use(cors({ exposedHeaders: ["X-Sources"] }));
+app.use(
+  cors({
+    origin: true, // Dynamically allow any origin
+    credentials: false,
+    exposedHeaders: ["X-Sources"],
+  }),
+);
 app.use(express.json());
 
 // 2. Setup Bull-Board (Queue Dashboard)
