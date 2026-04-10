@@ -63,7 +63,10 @@ const ChatModel =
 export const createChat = async (userId: string, data: Partial<IChat>) =>
   await new ChatModel({ ...data, userId }).save();
 export const getChatById = async (id: string, userId: string) =>
-  await ChatModel.findOne({ _id: id, userId });
+  await ChatModel.findOne({ _id: id, userId }).populate(
+    "linkedDocuments",
+    "fileName fileExt status tags summary",
+  );
 export const getChatsByUser = async (userId: string) =>
   await ChatModel.find({ userId })
     .populate("linkedDocuments", "fileName fileExt status tags summary")

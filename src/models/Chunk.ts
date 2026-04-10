@@ -63,8 +63,21 @@ export const getMatchingChunks = async (
   userId: string,
   queryVector: number[],
   mode: "default" | "comparison" = "default",
+  documentIds?: string[],
 ) => {
   const candidateLimit = mode === "comparison" ? 12 : 8;
+
+  const filter: any = {
+    userId: new mongoose.Types.ObjectId(userId),
+  };
+
+  // If specific documents are linked, filter by them
+  if (documentIds && documentIds.length > 0) {
+    filter.documentId = {
+      $in: documentIds.map((id) => new mongoose.Types.ObjectId(id)),
+    };
+  }
+
   const candidates = await ChunkModel.aggregate([
     {
       $vectorSearch: {
@@ -73,9 +86,7 @@ export const getMatchingChunks = async (
         queryVector: queryVector,
         numCandidates: 100,
         limit: candidateLimit,
-        filter: {
-          userId: new mongoose.Types.ObjectId(userId), // ✅ cast string to ObjectId
-        },
+        filter,
       },
     },
     {

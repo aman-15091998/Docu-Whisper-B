@@ -151,6 +151,10 @@ The API is a standard Node.js application. Recommended platforms: **Render**, **
     {
       "path": "userId",
       "type": "filter"
+    },
+    {
+      "path": "documentId",
+      "type": "filter"
     }
   ]
 }

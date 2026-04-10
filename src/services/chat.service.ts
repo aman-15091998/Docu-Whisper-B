@@ -11,18 +11,20 @@ export const chatService = {
     userId: string,
     history: any[],
     mode: "default" | "comparison" = "default",
+    documentIds?: string[],
   ) {
     // 1. Get Vector & Reranked Context
     const queryVectorArr = await aiService.createEmbeddings([userQuery]);
     const queryVector = queryVectorArr[0];
 
-    console.log("queryVectorArr", queryVectorArr);
+    // console.log("queryVectorArr", queryVectorArr);
 
     const contextResults = await vectorService.getRelevantContext(
       queryVector,
       userId,
       userQuery,
       mode,
+      documentIds,
     );
 
     // 2. Format Context for the Prompt with indices for citation
@@ -47,10 +49,10 @@ export const chatService = {
         content: content,
       } as ModelMessage;
     });
-
+    // console.log("mode", mode);
     // 4. Construct System Instruction
     const systemPrompt =
-      mode === "comparison"
+      mode == "comparison"
         ? `You are Docu Whisper, an expert document analyst specializing in comparative research.
     Your goal is to contrast and synthesize information across different documents or sections. 
 
@@ -75,7 +77,7 @@ export const chatService = {
 
     CONTEXT:
     ${contextString}`;
-
+    console.log("system prompt", systemPrompt);
     return {
       messages: [
         ...coreMessages,

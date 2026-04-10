@@ -10,9 +10,15 @@ export const vectorService = {
     userId: string,
     queryText: string,
     mode: "default" | "comparison" = "default",
+    documentIds?: string[],
   ) {
     // 1. Atlas Vector Search (Over-fetch top 15)
-    const candidates = await getMatchingChunks(userId, queryVector, mode);
+    const candidates = await getMatchingChunks(
+      userId,
+      queryVector,
+      mode,
+      documentIds,
+    );
     // console.log("candidates", candidates);
     if (!candidates) return [];
 

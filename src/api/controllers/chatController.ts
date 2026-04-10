@@ -120,16 +120,25 @@ export const sendMessage = async (req: Request, res: Response) => {
     if (chat.isInactive) {
       return res.status(403).json({
         success: false,
-        message: "This conversation is inactive because its linked documents were removed.",
+        message:
+          "This conversation is inactive because its linked documents were removed.",
       });
     }
 
     // If mode is passed in request, persist it to the chat document
     let activeMode = chat.mode;
-    if (mode && (mode === "default" || mode === "comparison") && mode !== chat.mode) {
+    if (
+      mode &&
+      (mode === "default" || mode === "comparison") &&
+      mode !== chat.mode
+    ) {
       await updateChatMode(chatId, mode, userId);
       activeMode = mode;
     }
+
+    const documentIds = (chat.linkedDocuments || []).map((doc: any) =>
+      doc._id.toString(),
+    );
 
     const { messages, systemPrompt, sources } =
       await chatService.prepareChatContext(
@@ -137,6 +146,7 @@ export const sendMessage = async (req: Request, res: Response) => {
         userId,
         chat.messages as ModelMessage[],
         activeMode,
+        documentIds,
       );
 
     // Send sources in response header before stream starts
@@ -503,7 +513,8 @@ export const getSuggestedQuestions = async (req: Request, res: Response) => {
     const assistantMessages = chat.messages.filter(
       (m: any) => m.role === "assistant",
     );
-
+    console.log("linkedDocuments", chat.linkedDocuments);
+    console.log("assistantMessages", assistantMessages);
     let context: string;
     if (assistantMessages.length > 0) {
       context = assistantMessages[assistantMessages.length - 1].content;
