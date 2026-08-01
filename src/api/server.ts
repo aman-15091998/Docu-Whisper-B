@@ -53,8 +53,8 @@ const startServer = async () => {
   await connectDB();
 
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📊 Queue Dashboard: http://localhost:${PORT}/admin/queues`);
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Queue Dashboard: http://localhost:${PORT}/admin/queues`);
   });
 };
 

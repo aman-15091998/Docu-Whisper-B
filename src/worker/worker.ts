@@ -35,13 +35,13 @@ export const ingestionWorker = new Worker(
       await ingestionService.generateEmbeddings(documentId, userId, rawPages);
       await job.updateProgress(100);
 
-      console.log(`✅ Document ${documentId} indexed successfully.`);
+      console.log(`Document ${documentId} indexed successfully.`);
     } catch (error) {
-      console.error(`❌ Worker Error:`, error);
+      console.error(`Worker Error:`, error);
       await updateDocStatus(documentId, "failed");
       throw error; // Triggers BullMQ retry
     }
   },
   { connection: redisConfig.connection },
 );
-console.log("🚀 Ingestion Worker is live and listening...");
+console.log("Ingestion Worker is live and listening...");
